@@ -11,8 +11,7 @@ Just a bootloader, a kernel, and the Wired, for now..
 
 ---
 
-## showcase
-I might forget about this, but here is the boot gif
+## Gifs of Copeland_os-SEL 
 ![Boot GIF](https://github.com/rafdog1222/rafdog1222/blob/main/boot.gif)
 
 ---
