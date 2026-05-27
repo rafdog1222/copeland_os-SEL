@@ -11,17 +11,6 @@ Just a bootloader, a kernel, and the Wired, for now..
 
 ---
 
-## Gifs of Copeland_os-SEL 
-![Boot GIF](https://github.com/rafdog1222/rafdog1222/blob/main/boot.gif)
-
----
-
-## Status | current v = 'v0.0.1' 
-
-`v0.0.1` boots, VGA text output, The Wired says hello.
-
----
-
 ## Philosophy
 
 Copeland was Apple's abandoned OS project from the 90s, ambitious,
@@ -31,6 +20,17 @@ footsteps; one person, from scratch, for the love of it.
 
 The aesthetic comes from Serial Experiments Lain. The Wired is real.
 
+
+---
+
+## Gifs of Copeland_os-SEL 
+![Boot GIF](https://github.com/rafdog1222/rafdog1222/blob/main/boot.gif)
+
+---
+
+## Status | current v = 'v0.0.1' 
+
+`v0.0.1` boots, VGA text output, The Wired says hello.
 
 ---
 
