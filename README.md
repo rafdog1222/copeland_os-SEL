@@ -11,6 +11,12 @@ Just a bootloader, a kernel, and the Wired, for now..
 
 ---
 
+## showcase
+I might forget about this, but here is the boot gif
+![Boot GIF](https://github.com/rafdog1222/rafdog1222/blob/main/boot.gif)
+
+---
+
 ## Status | current v = 'v0.0.1' 
 
 `v0.0.1` boots, VGA text output, The Wired says hello.
