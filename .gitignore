@@ -1,0 +1,8 @@
+# Build artifacts
+*.o
+*.bin
+*.iso
+iso/boot/kernel.bin 
+signal.img
+*.img
+mkfs_signal
