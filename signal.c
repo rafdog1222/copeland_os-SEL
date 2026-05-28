@@ -1,12 +1,11 @@
 #include "signal.h"
-#include "kernel/drivers/rtc.h"
+#include "kernel/drivers/rtc.h" 
 
 extern void *kmalloc(uint32_t size);
 extern void  kfree(void *ptr);
 extern void vga_print(const char *str, unsigned short color);
 extern void vga_print_hex(uint32_t val);
 extern void vga_print_dec(uint32_t val);
-
 
 /* *sigh* this is going to be a while... */
 
@@ -159,7 +158,6 @@ int signal_journal_replay(signal_fs_t *fs)
         if (sig_checksum(fs->scratch, SIGNAL_BLOCK_SIZE) != hdr.checksum)
             continue;
         sig_memcpy(fs->journal_buf, fs->scratch, SIGNAL_BLOCK_SIZE);
-        /* read commit block */
         if (blk_read(fs, jbase + i + 2, fs->scratch) != SIGNAL_OK)
             continue;
         sig_memcpy(&cmt, fs->scratch, sizeof(cmt));
@@ -168,6 +166,11 @@ int signal_journal_replay(signal_fs_t *fs)
         if (cmt.seq != hdr.seq)
             continue;
         blk_write(fs, hdr.target_block, fs->journal_buf);
+        sig_memset(fs->scratch, 0, SIGNAL_BLOCK_SIZE);
+        blk_write(fs, jbase + i,     fs->scratch);  /* header */
+        blk_write(fs, jbase + i + 1, fs->scratch);  /* data   */
+        blk_write(fs, jbase + i + 2, fs->scratch);  /* commit */
+
         i += 2;
     }
     fs->sb.journal_head = 0;
@@ -643,6 +646,8 @@ int signal_mount(signal_fs_t *fs)
 }
 
 int signal_unmount(signal_fs_t *fs) {
+    blk_write(fs, fs->sb.bitmap_block, fs->bitmap);
+    fs->sb.journal_head = 0;
     return superblock_write(fs);
 }
 

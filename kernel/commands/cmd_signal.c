@@ -86,15 +86,14 @@ static void trim_trailing(char *s) {
     }
 }
 
-static int next_token(char **src, char *dst, uint32_t dst_size) {
-    char *p = *src;
+static int next_token(const char **src, char *dst, uint32_t dst_size) {
+    const char *p = *src;   /* ← const char*, not char* */
     while (*p == ' ') p++;
     if (!*p) return 0;
     uint32_t i = 0;
     while (*p && *p != ' ' && i < dst_size - 1)
         dst[i++] = *p++;
     dst[i] = '\0';
-    trim_trailing(dst);
     while (*p == ' ') p++;
     *src = p;
     return 1;
@@ -128,7 +127,7 @@ void ensure_inited(void) {
 
 /* mkfs */
 void cmd_fs_mkfs(void) {
-    char *args = arg_start();
+    const char *args = arg_start();
     char tok[64];
     uint32_t total_blocks = 0;
     uint64_t lba_offset = 0;
@@ -153,7 +152,6 @@ void cmd_fs_mkfs(void) {
     if (!next_token(&args, label, sizeof(label)))
         label[0] = '\0';
 
-    ensure_inited();
     ata_set_partition_offset(lba_offset);   /* seting before format */
 
     vga_print("\n formatting signal filesystem...\n", 0x0E00);
@@ -165,9 +163,8 @@ void cmd_fs_mkfs(void) {
 
 /* mount */
 void cmd_fs_mount(void) {
-    char *args = arg_start();
+    const char *args = arg_start();
     char tok[32];
-
     if (next_token(&args, tok, sizeof(tok))) {
         uint64_t lba = 0;
         for (uint32_t i = 0; tok[i]; i++) {
@@ -176,18 +173,23 @@ void cmd_fs_mount(void) {
         }
         ata_set_partition_offset(lba);
     }
-
     if (g_fs_mounted) {
-        vga_print("\n already mounted, run 'umount' first\n", 0x0E00);
+        vga_print("\n already mounted\n", 0x0A00);
         return;
     }
-
-    ensure_inited();
+    /* only call signal_init if not already inited by kernel_main */
+    if (!g_fs_inited) {
+        ata_init();
+        ata_set_partition_offset(0);
+        signal_init(&g_fs, ata_read_block, ata_write_block);
+        g_fs_inited = 1;
+    }
     int r = signal_mount(&g_fs);
     if (r != SIGNAL_OK) { vga_print("\n mount failed:", 0x0C00); print_err(r); return; }
     g_fs_mounted = 1;
     vga_print("\n signal mounted.\n", 0x0A00);
 }
+
 
 void cmd_fs_umount(void) {
     if (!g_fs_mounted) { vga_print("\n not mounted\n", 0x0E00); return; }
@@ -248,7 +250,7 @@ void cmd_fs_touch(void) {
 
 void cmd_fs_write(void) {
     if (!g_fs_mounted) { vga_print("\n not mounted\n", 0x0E00); return; }
-    char *args = arg_start();
+    const char *args = arg_start();
     char path[64];
     if (!next_token(&args, path, sizeof(path))) {
         vga_print("\n usage: write <path> <data>\n", 0x0E00);

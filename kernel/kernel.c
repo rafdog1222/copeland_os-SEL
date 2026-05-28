@@ -212,7 +212,6 @@ void kernel_main(uint32_t magic, struct multiboot_info *mbi) {
     heap_init();
     /* boot splash start, signal line stays open */
     boot_splash();
-    /* auto-mount signal, result on the splash line */
     ata_init();
     ata_set_partition_offset(0);
     signal_init(&g_fs, ata_read_block, ata_write_block);

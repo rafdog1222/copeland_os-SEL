@@ -13,6 +13,6 @@ typedef struct {
 } rtc_time_t;
 
 void     rtc_read(rtc_time_t *t);
-uint32_t rtc_timesstamp(void); /* seconds since 2000-01-01, good enough */
+uint32_t rtc_timestamp(void); /* seconds since 2000-01-01, good enough */
 
 #endif
