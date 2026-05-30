@@ -3,6 +3,7 @@
 #include "../kernel.h"
 #include <stdint.h>
 #include "../shell.h"
+#include "../scrollback.h"
 
 #define KEYBOARD_IRQ  33
 #define PIC1_CMD      0x20
@@ -14,6 +15,8 @@
 #define SC_DOWN       0x50
 #define SC_LEFT       0x4B
 #define SC_RIGHT      0x4D
+#define SC_PGUP       0x49
+#define SC_PGDN       0x51
 
 /* scancodes for shift keys */
 #define SC_LSHIFT      0x2A
@@ -73,13 +76,20 @@ void keyboard_handler(void) {
         e0_prefix = 1;
         return;
     }
-
     if (e0_prefix) {
         e0_prefix = 0;
-        if (scancode == SC_UP)    { shell_history_up();   return; }
-        if (scancode == SC_DOWN)  { shell_history_down(); return; }
-        if (scancode == SC_LEFT)  { shell_cursor_left();  return; }
-        if (scancode == SC_RIGHT) { shell_cursor_right(); return; }
+        if (scancode == SC_UP) {
+            if (shift_held) scrollback_page_up();
+            else shell_history_up();
+            return;
+        }
+        if (scancode == SC_DOWN) {
+            if (shift_held)  scrollback_page_down();
+            else shell_history_down();
+            return;
+        }
+        if (scancode == SC_LEFT)  { shell_cursor_left();    return; }
+        if (scancode == SC_RIGHT) { shell_cursor_right();   return; }
         return;
     }
     if (scancode == SC_LSHIFT || scancode == SC_RSHIFT) { shift_held = 1; return; }

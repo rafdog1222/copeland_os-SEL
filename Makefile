@@ -7,7 +7,8 @@ LDFLAGS = -ffreestanding -O2 -nostdlib
 BOOT_OBJ  = boot/boot.o
 
 KERN_OBJ  = kernel/kernel.o \
-			kernel/shell.o
+			kernel/shell.o \
+			kernel/scrollback.o
 
 MM_OBJS   = kernel/mm/pmm.o \
 			kernel/mm/heap.o

@@ -15,6 +15,7 @@
 #include "drivers/ata.h"
 #include "fs/signal_format.h"
 #include "../signal.h"
+#include "scrollback.h"
 
 
 extern signal_fs_t g_fs;
@@ -24,6 +25,7 @@ extern int  g_fs_inited;
 static void vga_scroll(void);
 static unsigned int cursor_x = 0;
 static unsigned int cursor_y = 0;
+static unsigned int prompt_offset = 0;
 static inline uint8_t inb(uint16_t port) {
     uint8_t ret;
     __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
@@ -75,7 +77,27 @@ void vga_print_hex(uint32_t val) {
     vga_putchar(h[(val >> i) & 0xF], 0x0F00);
 }
 
+void vga_clear_raw(void) {
+    for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++)
+        VGA_BUFFER[i] = 0x0700 | ' ';
+}
 
+void vga_put_raw(int col, int row, char c, uint8_t color) {
+    VGA_BUFFER[row * VGA_WIDTH + col] = ((uint16_t)color << 8) | (uint8_t)c;
+}
+
+void vga_scrollback_restore(void) {
+    vga_update_cursor();
+}
+
+unsigned int vga_get_prompt_offset(void) {
+    return prompt_offset;
+}
+
+void vga_set_write_pos(unsigned int x, unsigned int y) {
+    cursor_x = x;
+    cursor_y = y;
+}
 
 void vga_clear(void) {
     for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++)
@@ -104,17 +126,24 @@ void vga_enable_cursor(void) {
 }
 
 static void vga_scroll(void) {
-    /* shift rows up 1 */
+    char line_text[VGA_WIDTH];
+    uint8_t line_colors[VGA_WIDTH];
+    for (int col = 0; col < VGA_WIDTH; col++) {
+        uint16_t cell   = VGA_BUFFER[col];
+        line_text[col]  = cell & 0xFF;
+        line_colors[col] = (cell >> 8) & 0xFF;
+    }
+    scrollback_push(line_text, line_colors);
+    /* shift rows up */
     for (int row = 1; row < VGA_HEIGHT; row++) {
         for (int col = 0; col < VGA_WIDTH; col++) {
-            VGA_BUFFER[(row - 1) * VGA_WIDTH + col] =
+            VGA_BUFFER[(row-1) * VGA_WIDTH + col] =
                 VGA_BUFFER[row * VGA_WIDTH + col];
         }
     }
     /* cl last row, */
     for (int col = 0; col < VGA_WIDTH; col++)
-        VGA_BUFFER[(VGA_HEIGHT - 1) * VGA_WIDTH + col] = WHITE_ON_BLACK | ' ';
-    /* keeping the cursor on the last line */
+        VGA_BUFFER[(VGA_HEIGHT-1) * VGA_WIDTH + col] = 0x0F00 | ' ';
     cursor_y = VGA_HEIGHT - 1;
 }
 
@@ -124,7 +153,6 @@ static void k_delay(uint32_t count) {
     }
 }
 
-static unsigned int prompt_offset = 0;
 void vga_save_prompt_pos(void) {
     prompt_offset = cursor_y * VGA_WIDTH + cursor_x;
 }
@@ -232,6 +260,7 @@ void kernel_main(uint32_t magic, struct multiboot_info *mbi) {
     if (magic == 0x2BADB002 && mbi)
         pmm_init(mbi->mem_upper);
     heap_init();
+    scrollback_init();
     /* boot splash start, signal line stays open */
     boot_splash();
     ata_init();

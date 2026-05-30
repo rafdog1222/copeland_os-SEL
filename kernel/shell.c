@@ -1,5 +1,6 @@
 #include "shell.h"
 #include "kernel.h"
+#include "scrollback.h"
 #include "commands/commands.h"
 #include "commands/cmd_system.h"
 #include <stdint.h>
@@ -48,10 +49,11 @@ static void history_push(void) {
 }
 
 static void shell_clear_input(void) {
-    vga_set_cursor_offset(0);
+    unsigned int po = vga_get_prompt_offset();
+    vga_set_write_pos(po % VGA_WIDTH, po / VGA_WIDTH);
     for (uint32_t i = 0; i < cmd_len; i++)
         vga_putchar(' ', 0x0F00);
-    vga_set_cursor_offset(0);
+    vga_set_write_pos(po % VGA_WIDTH, po / VGA_WIDTH);
     cmd_len = 0;
     cursor_pos = 0;
     vga_update_cursor();
@@ -186,6 +188,7 @@ void shell_cursor_right(void) {
 
 
 void shell_init(void) {
+    scrollback_start();
     commands_init();
     shell_prompt();
     vga_update_cursor();
