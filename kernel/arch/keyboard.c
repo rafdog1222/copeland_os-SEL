@@ -12,6 +12,8 @@
 #define KB_DATA_PORT  0x60
 #define SC_UP         0x48
 #define SC_DOWN       0x50
+#define SC_LEFT       0x4B
+#define SC_RIGHT      0x4D
 
 /* scancodes for shift keys */
 #define SC_LSHIFT      0x2A
@@ -74,8 +76,10 @@ void keyboard_handler(void) {
 
     if (e0_prefix) {
         e0_prefix = 0;
-        if (scancode == SC_UP)   { shell_history_up();   return; }
-        if (scancode == SC_DOWN) { shell_history_down(); return; }
+        if (scancode == SC_UP)    { shell_history_up();   return; }
+        if (scancode == SC_DOWN)  { shell_history_down(); return; }
+        if (scancode == SC_LEFT)  { shell_cursor_left();  return; }
+        if (scancode == SC_RIGHT) { shell_cursor_right(); return; }
         return;
     }
     if (scancode == SC_LSHIFT || scancode == SC_RSHIFT) { shift_held = 1; return; }

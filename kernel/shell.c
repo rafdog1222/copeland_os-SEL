@@ -11,6 +11,7 @@
 /* expo for cmd_echo */
 char     cmd_buf[CMD_BUFFER_SIZE];
 uint32_t cmd_len = 0;
+uint32_t cursor_pos = 0;
 
 static char history[HISTORY_SIZE][CMD_BUFFER_SIZE];
 static int  history_count = 0;
@@ -47,7 +48,12 @@ static void history_push(void) {
 }
 
 static void shell_clear_input(void) {
-    while (cmd_len > 0) { cmd_len--; vga_backspace(); }
+    vga_set_cursor_offset(0);
+    for (uint32_t i = 0; i < cmd_len; i++)
+        vga_putchar(' ', 0x0F00);
+    vga_set_cursor_offset(0);
+    cmd_len = 0;
+    cursor_pos = 0;
     vga_update_cursor();
 }
 
@@ -59,6 +65,8 @@ static void shell_load_history(int idx) {
         vga_putchar(*src, 0x0F00);
         src++;
     }
+    cursor_pos = cmd_len;
+    vga_set_cursor_offset(cursor_pos);
     vga_update_cursor();
 }
 
@@ -83,6 +91,8 @@ void shell_history_down(void) {
 /* ask ask ask */
 static void shell_prompt(void) {
     vga_print("\n> ", 0x0B00);
+    vga_save_prompt_pos();
+    cursor_pos = 0;
 }
 
 /* execute = exe's are cute = execute */
@@ -90,6 +100,7 @@ static void shell_execute(void) {
     if (cmd_len == 0) return;
     cmd_buf[cmd_len] = '\0';
     history_push();
+    cursor_pos = 0;
     /* echo is cool & special so it needs args */
     if (k_strncmp(cmd_buf, "echo", 4) == 0) {
         cmd_echo();
@@ -128,20 +139,51 @@ void shell_handle_key(char c) {
         return;
     }
     if (c == '\b') {
-        if (cmd_len > 0) {
-            cmd_len--;
-            cmd_buf[cmd_len] = 0;
-            vga_backspace();
+        if (cursor_pos > 0) {
+            for (uint32_t i = cursor_pos - 1; i < cmd_len - 1; i++)
+                cmd_buf[i] = cmd_buf[i+1];
+            cmd_buf[--cmd_len] = 0;
+            cursor_pos--;
+            vga_move_back(1);
+            for (uint32_t i = cursor_pos; i < cmd_len; i++)
+                vga_putchar(cmd_buf[i], 0x0F00);
+            vga_putchar(' ', 0x0F00); 
+            vga_set_cursor_offset(cursor_pos);
             vga_update_cursor();
         }
         return;
     }
     if (cmd_len < CMD_BUFFER_SIZE - 1) {
-        cmd_buf[cmd_len++] = c;
-        vga_putchar(c, 0x0F00);
+        for (uint32_t i = cmd_len; i > cursor_pos; i--)
+            cmd_buf[i] = cmd_buf[i-1];
+        cmd_buf[cursor_pos] = c;
+        cmd_len++;
+        cursor_pos++;
+        for (uint32_t i = cursor_pos - 1; i < cmd_len; i++)
+            vga_putchar(cmd_buf[i], 0x0F00);
+        vga_set_cursor_offset(cursor_pos);
         vga_update_cursor();
     }
 }
+
+void shell_cursor_left(void) {
+    if (cursor_pos > 0) {
+        cursor_pos--;
+        vga_set_cursor_offset(cursor_pos);
+        vga_update_cursor();
+    }
+}
+
+void shell_cursor_right(void) {
+    if (cursor_pos < cmd_len) {
+        cursor_pos++;
+        vga_set_cursor_offset(cursor_pos);
+        vga_update_cursor();
+    }
+}
+
+
+
 
 void shell_init(void) {
     commands_init();

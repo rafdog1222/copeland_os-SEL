@@ -124,6 +124,29 @@ static void k_delay(uint32_t count) {
     }
 }
 
+static unsigned int prompt_offset = 0;
+void vga_save_prompt_pos(void) {
+    prompt_offset = cursor_y * VGA_WIDTH + cursor_x;
+}
+
+void vga_set_cursor_offset(uint32_t offset_from_prompt) {
+    unsigned int pos = prompt_offset + offset_from_prompt;
+    cursor_x = pos % VGA_WIDTH;
+    cursor_y = pos / VGA_WIDTH;
+    vga_update_cursor();
+}
+
+void vga_move_back(uint32_t n) {
+    if (cursor_x >= n) {
+        cursor_x -= n;
+    } else {
+        cursor_y--;
+        cursor_x =  VGA_WIDTH - (n - cursor_x);
+    }
+}
+
+
+
 static void boot_splash(void) {
     vga_clear();
 
@@ -133,7 +156,6 @@ static void boot_splash(void) {
     vga_print("        ======================\n", 0x0B00);
     k_delay(2000000);
 
-    vga_print("\n\n", 0x0F00);
     vga_print("        present day, present time...\n", 0x0800);
     k_delay(4000000);
     vga_print("\n\n", 0x0F00);
