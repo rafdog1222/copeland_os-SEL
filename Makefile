@@ -17,7 +17,9 @@ ARCH_OBJS = kernel/arch/gdt.o \
             kernel/arch/idt.o \
 			kernel/arch/idt_load.o \
             kernel/arch/keyboard.o \
-			kernel/arch/keyboard_asm.o
+			kernel/arch/keyboard_asm.o \
+			kernel/arch/pit.o \
+			kernel/arch/pit_asm.o
 
 CMD_OBJS  = kernel/commands/commands.o \
             kernel/commands/cmd_system.o \

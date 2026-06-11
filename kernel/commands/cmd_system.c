@@ -3,6 +3,7 @@
 #include "../kernel.h"
 #include "../shell.h"
 #include "../drivers/rtc.h"
+#include "../arch/pit.h"
 #include <stdint.h>
 
 /* shell.h for cmd_buf access in echo */
@@ -63,6 +64,14 @@ void cmd_echo(void) {
     } else {
         vga_print("\n  echo: nothing to say\n\n", 0x0800);
     }
+}
+
+void cmd_tick(void) {
+    vga_print("\n  ticks since boot: ", 0x0800);
+    vga_print_dec(pit_ticks());
+    vga_print("\n  uptime Sec's: ", 0x0800);
+    vga_print_dec(pit_ticks() / 100);
+    vga_print("\n\n", 0x0F00);
 }
 
 static void print2(uint8_t n, unsigned short color) {

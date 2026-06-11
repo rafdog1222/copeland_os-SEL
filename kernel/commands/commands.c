@@ -13,6 +13,7 @@ command_t command_table[] = {
     { "about",   cmd_about,   "about copeland_os-SEL"       },
     { "fetch",   cmd_fetch,   "system info (copeland-fetch)"},
     { "echo",    cmd_echo,    "repeat your words back"      },
+    { "tick",    cmd_tick,    "show timer ticks since boot" },
     { "time",    cmd_time,    "show current time"           },    
     /* wired */
     { "wired",   cmd_wired,   "connect to the Wired"        },

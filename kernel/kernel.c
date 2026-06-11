@@ -7,6 +7,7 @@
 #include "kernel.h"
 #include "arch/gdt.h"
 #include "arch/idt.h"
+#include "arch/pit.h"
 #include "arch/keyboard.h"
 #include <stdint.h>
 #include "shell.h"
@@ -250,6 +251,7 @@ void kernel_main(uint32_t magic, struct multiboot_info *mbi) {
     gdt_install();
     idt_install();
     keyboard_install();
+    pit_install();
     if (magic == 0x2BADB002 && mbi)
         pmm_init(mbi->mem_upper);
     heap_init();
