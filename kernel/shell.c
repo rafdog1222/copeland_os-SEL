@@ -1,6 +1,5 @@
 #include "shell.h"
 #include "kernel.h"
-#include "scrollback.h"
 #include "commands/commands.h"
 #include "commands/cmd_system.h"
 #include <stdint.h>
@@ -188,7 +187,6 @@ void shell_cursor_right(void) {
 
 
 void shell_init(void) {
-    scrollback_start();
     commands_init();
     shell_prompt();
     vga_update_cursor();

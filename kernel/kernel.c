@@ -15,7 +15,6 @@
 #include "drivers/ata.h"
 #include "fs/signal_format.h"
 #include "../signal.h"
-#include "scrollback.h"
 
 
 extern signal_fs_t g_fs;
@@ -32,22 +31,42 @@ static inline uint8_t inb(uint16_t port) {
     return ret;
 }
 
-void vga_putchar(char c, unsigned short color) {
+void vga_putchar(char c, unsigned short color)
+{
     if (c == '\n') {
         cursor_x = 0;
         cursor_y++;
-        if (cursor_y >= VGA_HEIGHT) vga_scroll();
+        if (cursor_y >= VGA_HEIGHT) {
+            vga_scroll();
+        }
         vga_update_cursor();
         return;
     }
-    VGA_BUFFER[cursor_y * VGA_WIDTH + cursor_x] = color | (unsigned char)c;
+    VGA_BUFFER[cursor_y * VGA_WIDTH + cursor_x] =
+        color | (unsigned char)c;
     cursor_x++;
     if (cursor_x >= VGA_WIDTH) {
         cursor_x = 0;
         cursor_y++;
-        if (cursor_y >= VGA_HEIGHT) vga_scroll();
+        if (cursor_y >= VGA_HEIGHT) {
+            vga_scroll();
+        }
     }
     vga_update_cursor();
+}
+
+static void vga_scroll(void) {
+    for (unsigned int y = 1; y < VGA_HEIGHT; y++) {
+        for (unsigned int x = 0; x < VGA_WIDTH; x++) {
+            VGA_BUFFER[(y - 1) * VGA_WIDTH + x] =
+                VGA_BUFFER[y * VGA_WIDTH + x];
+        }
+    }
+    for (unsigned int x = 0; x < VGA_WIDTH; x++) {
+        VGA_BUFFER[(VGA_HEIGHT - 1) * VGA_WIDTH + x] =
+            WHITE_ON_BLACK | ' ';
+    }
+    cursor_y = VGA_HEIGHT - 1;
 }
 
 void vga_backspace(void) {
@@ -86,10 +105,6 @@ void vga_put_raw(int col, int row, char c, uint8_t color) {
     VGA_BUFFER[row * VGA_WIDTH + col] = ((uint16_t)color << 8) | (uint8_t)c;
 }
 
-void vga_scrollback_restore(void) {
-    vga_update_cursor();
-}
-
 unsigned int vga_get_prompt_offset(void) {
     return prompt_offset;
 }
@@ -123,28 +138,6 @@ void vga_enable_cursor(void) {
     outb(0x3D5, (inb(0x3D5) & 0xC0) | 13);
     outb(0x3D4, 0x0B);
     outb(0x3D5, (inb(0x3D5) & 0xE0) | 15);
-}
-
-static void vga_scroll(void) {
-    char line_text[VGA_WIDTH];
-    uint8_t line_colors[VGA_WIDTH];
-    for (int col = 0; col < VGA_WIDTH; col++) {
-        uint16_t cell   = VGA_BUFFER[col];
-        line_text[col]  = cell & 0xFF;
-        line_colors[col] = (cell >> 8) & 0xFF;
-    }
-    scrollback_push(line_text, line_colors);
-    /* shift rows up */
-    for (int row = 1; row < VGA_HEIGHT; row++) {
-        for (int col = 0; col < VGA_WIDTH; col++) {
-            VGA_BUFFER[(row-1) * VGA_WIDTH + col] =
-                VGA_BUFFER[row * VGA_WIDTH + col];
-        }
-    }
-    /* cl last row, */
-    for (int col = 0; col < VGA_WIDTH; col++)
-        VGA_BUFFER[(VGA_HEIGHT-1) * VGA_WIDTH + col] = 0x0F00 | ' ';
-    cursor_y = VGA_HEIGHT - 1;
 }
 
 static void k_delay(uint32_t count) {
@@ -260,7 +253,6 @@ void kernel_main(uint32_t magic, struct multiboot_info *mbi) {
     if (magic == 0x2BADB002 && mbi)
         pmm_init(mbi->mem_upper);
     heap_init();
-    scrollback_init();
     /* boot splash start, signal line stays open */
     boot_splash();
     ata_init();

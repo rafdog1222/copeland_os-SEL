@@ -16,7 +16,6 @@ void vga_clear_raw(void);
 void vga_put_raw(int col, int row, char c, uint8_t color);
 void vga_set_write_pos(unsigned int x, unsigned int y);
 unsigned int vga_get_prompt_offset(void);
-void vga_scrollback_restore(void);
 void vga_move_back(uint32_t n);
 void vga_print_dec(uint32_t val);
 void vga_print_hex(uint32_t val);

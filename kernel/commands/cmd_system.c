@@ -39,7 +39,7 @@ void cmd_about(void) {
     vga_print("  spirit  : Copeland OS + Serial Experiments Lain\n", 0x0700);
     vga_print("  author  : rafdog\n", 0x0700);
     vga_print("  license : GNU GPL v2\n", 0x0700);
-    vga_print("  status  : v0.2.0 - the Wired has memory\n\n", 0x0B00);
+    vga_print("  status  : v0.0.3 - the Wired has, signal\n\n", 0x0B00);
 }
 
 void cmd_fetch(void) {
